@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Nemi Mart | Secure Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --blue: #1a2332; --orange: #e68a00; }
+        body { font-family: sans-serif; margin: 0; background: #f4f7f6; display: none; flex-direction: column; }
+        header { background: var(--blue); color: white; padding: 15px; text-align: center; }
+        .stats-container { display: flex; justify-content: center; gap: 20px; padding: 20px; background: #fff; border-bottom: 1px solid #eee; }
+        .stat-box { background: #fff; border: 1px solid #ddd; padding: 15px 30px; border-radius: 10px; text-align: center; min-width: 150px; }
+        .stat-box h2 { margin: 5px 0; color: var(--orange); }
+        .nav-tabs { display: flex; justify-content: center; gap: 10px; padding: 15px; background: #fff; }
+        .tab-btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; background: #eee; }
+        .active-tab { background: var(--orange); color: white; }
+        .container { padding: 20px; max-width: 1100px; margin: auto; width: 95%; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; border: 1px solid #eee; text-align: left; font-size: 13px; }
+        input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 100%; box-sizing: border-box; }
+        .btn-delete { color: red; background: none; border: none; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>The Nemi Mart Admin</h1>
+    <p style="font-size: 12px;">Purity in Every Purchase</p>
+</header>
+
+<div class="stats-container">
+    <div class="stat-box"><p>TOTAL SALES</p><h2 id="total-revenue">₹0</h2></div>
+    <div class="stat-box"><p>ORDERS COUNT</p><h2 id="total-orders">0</h2></div>
+</div>
+
+<div class="nav-tabs">
+    <button class="tab-btn active-tab" onclick="openTab('orders')">Orders & Logistics</button>
+    <button class="tab-btn" onclick="openTab('products')">Inventory & Pricing</button>
+</div>
+
+<div class="container">
+    <div id="orders-sec">
+        <div class="card">
+            <h3>Manage Orders (UTR Verification)</h3>
+            <table>
+                <thead>
+                    <tr><th>User Email</th><th>UTR Number</th><th>Status</th><th>Logistics</th><th>Action</th></tr>
+                </thead>
+                <tbody id="order-rows"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="products-sec" style="display:none;">
+        <div class="card">
+            <h3>Add New Product</h3>
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                <input type="text" id="p_name" placeholder="Product Name">
+                <input type="number" id="p_price" placeholder="Price (₹)">
+                <input type="text" id="p_img" placeholder="Image URL (Link)">
+            </div>
+            <button class="tab-btn active-tab" style="margin-top:10px; width:100%" onclick="addNewProduct()">Add Product</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. Password Security Check
+    const accessKey = "11032007";
+    const userPass = prompt("Enter Admin Access Password:");
+    
+    if (userPass === accessKey) {
+        document.body.style.display = "flex";
+    } else {
+        alert("Wrong Password! Access Denied.");
+        window.location.href = "index.html";
+    }
+
+    const _supabase = supabase.createClient("https://rzmftpafcyxburlkwqnm.supabase.co", "sb_publishable_zt4Wt4wBgarEU15zF-RoKw_4achnceD");
+
+    function openTab(tab) {
+        document.getElementById('orders-sec').style.display = tab === 'orders' ? 'block' : 'none';
+        document.getElementById('products-sec').style.display = tab === 'products' ? 'block' : 'none';
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
+        if(event) event.target.classList.add('active-tab');
+    }
+
+    async function loadData() {
+        const { data: orders } = await _supabase.from('orders').select('*').order('created_at', { ascending: false });
+        if (orders) {
+            const revenue = orders.reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
+            document.getElementById('total-revenue').innerText = '₹' + revenue;
+            document.getElementById('total-orders').innerText = orders.length;
+
+            const tbody = document.getElementById('order-rows');
+            tbody.innerHTML = orders.map(o => `
+                <tr>
+                    <td>${o.user_email}</td>
+                    <td style="color:blue; font-weight:bold;">${o.utr_number}</td>
+                    <td>
+                        <select onchange="updateOrder('${o.id}', 'status', this.value)">
+                            <option ${o.status=='Pending'?'selected':''}>Pending</option>
+                            <option ${o.status=='Verified'?'selected':''}>Verified</option>
+                            <option ${o.status=='Shipped'?'selected':''}>Shipped</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="text" placeholder="Courier Name" value="${o.courier_name || ''}" onblur="updateOrder('${o.id}', 'courier_name', this.value)">
+                        <input type="text" placeholder="Tracking Link" value="${o.tracking_url || ''}" onblur="updateOrder('${o.id}', 'tracking_url', this.value)">
+                    </td>
+                    <td><button class="btn-delete" onclick="deleteRow('${o.id}')">Remove</button></td>
+                </tr>
+            `).join('');
+        }
+    }
+
+    async function updateOrder(id, field, value) {
+        const updateData = {}; updateData[field] = value;
+        await _supabase.from('orders').update(updateData).eq('id', id);
+        loadData();
+    }
+
+    async function deleteRow(id) {
+        if(confirm("Delete this order record?")) {
+            await _supabase.from('orders').delete().eq('id', id);
+            loadData();
+        }
+    }
+
+    async function addNewProduct() {
+        const name = document.getElementById('p_name').value;
+        const price = document.getElementById('p_price').value;
+        const image_url = document.getElementById('p_img').value;
+        await _supabase.from('products').insert([{ name, price, image_url }]);
+        alert("Product Added Successfully!");
+        location.reload();
+    }
+
+    window.onload = loadData;
+</script>
+</body>
+</html>

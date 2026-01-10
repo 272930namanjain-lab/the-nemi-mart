@@ -1,0 +1,77 @@
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Payment | The Nemi Mart</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --primary-orange: #e68a00; --dark-blue: #1a2332; }
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; background: #f9f9f9; }
+        .payment-box { background: white; padding: 30px; border-radius: 20px; max-width: 400px; margin: 0 auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .qr-img { width: 100%; max-width: 250px; margin: 20px 0; border: 1px solid #eee; border-radius: 10px; }
+        .upi-id { background: #eee; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 14px; margin: 10px 0; }
+        input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
+        .btn-verify { background: var(--primary-orange); color: white; border: none; padding: 15px; width: 100%; border-radius: 30px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="payment-box">
+        <h2 style="color: var(--dark-blue);">Verify Payment</h2>
+        
+        <p style="font-size: 14px; color: #666;">Scan QR to pay <b>Naman Jain</b></p>
+        <img src="qr code.png" class="qr-img" alt="UPI QR Code"> <div class="upi-id">UPI ID: namanjain1730@sbi</div> <p style="font-size: 12px; color: #888;">Receiving in: STATE BANK OF INDIA 0130</p> <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+
+        <p style="font-size: 14px; font-weight: bold;">Enter the 12-digit UTR/Reference No. after payment:</p> <input type="number" id="utr_input" placeholder="e.g. 4123XXXXXXXX">
+        <button class="btn-verify" onclick="submitOrder()">Verify & Submit Order</button>
+    </div>
+
+    <script>
+        const SB_URL = "https://rzmftpafcyxburlkwqnm.supabase.co";
+        const SB_KEY = "sb_publishable_zt4Wt4wBgarEU15zF-RoKw_4achnceD";
+        const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+        async function submitOrder() {
+            const utr = document.getElementById('utr_input').value;
+            if (utr.length !== 12) return alert("Please enter a valid 12-digit UTR number");
+
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (!session) return alert("Please login first!");
+
+            const amount = localStorage.getItem('cartTotal') || 0;
+            const productName = "Order from Cart"; // Isse aap dynamic bhi bana sakte hain
+
+            // Supabase 'orders' table mein data save karna
+            const { error } = await _supabase.from('orders').insert([
+                { 
+                    user_email: session.user.email,
+                    product_name: productName,
+                    amount: amount,
+                    utr_number: utr,
+                    status: 'Pending'
+                }
+            ]);
+
+            if (error) {
+                alert("Error saving order: " + error.message);
+            } else {
+                alert("Order submitted successfully! We will verify your payment soon.");
+                window.location.href = "index.html";
+            }
+        }
+    </script>
+</body>
+</html
+
+

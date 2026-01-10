@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --blue: #1a2332; --orange: #e68a00; --light: #f4f7f6; --text-gray: #4a4a4a; }
+        :root { --blue: #1a2332; --orange: #e68a00; --light: #f4f7f6; --text-gray: #4a4a4a; --green: #27ae60; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: white; overflow-x: hidden; }
         
         header { background: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; position: sticky; top: 0; z-index: 1000; }
@@ -24,26 +24,26 @@
         .hero h2 span { color: var(--orange); }
         .hero p { color: var(--text-gray); font-size: 1.1rem; line-height: 1.6; max-width: 500px; margin: 0 auto 35px; }
         
-        .hero-btns { display: flex; justify-content: center; gap: 15px; }
-        .btn-shop { background: var(--orange); color: white; padding: 14px 35px; border-radius: 30px; text-decoration: none; font-weight: bold; font-size: 1rem; box-shadow: 0 10px 20px rgba(230, 138, 0, 0.3); }
-
-        .container { padding: 40px 5%; background: var(--light); }
+        .container { padding: 40px 5%; background: var(--light); min-height: 400px; }
         .section-title { margin-bottom: 30px; position: relative; padding-left: 20px; }
         .section-title::before { content: ""; position: absolute; left: 0; top: 50%; width: 15px; height: 2px; background: var(--orange); }
         .section-title h4 { margin: 0; font-size: 1.4rem; color: var(--blue); }
 
         .product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 25px; }
         .product-card { background: white; border-radius: 15px; overflow: hidden; transition: 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative; }
-        .product-card img { width: 100%; height: 250px; object-fit: cover; background: #f9f9f9; }
+        .product-card img { width: 100%; height: 250px; object-fit: cover; background: #eee; }
         .product-info { padding: 20px; }
-        .price { color: var(--orange); font-size: 1.3rem; font-weight: bold; margin-bottom: 15px; }
+        
+        .price-container { margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .discount-price { color: var(--blue); font-size: 1.4rem; font-weight: bold; }
+        .original-price { color: #888; text-decoration: line-through; font-size: 0.95rem; }
+        .delivery-tag { color: var(--green); font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 15px; }
+
         .add-btn { background: var(--blue); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
 
-        /* User Info Modal */
         #user-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 400px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.2); z-index: 3000; }
-        #user-modal h3 { margin-top: 0; color: var(--blue); }
-        #user-modal input, #user-modal textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        .modal-btn { background: var(--orange); color: white; border: none; width: 100%; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        #user-modal input, #user-modal textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .modal-btn { background: var(--orange); color: white; border: none; width: 100%; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
         .cart-sidebar { position: fixed; top: 0; right: -400px; width: 350px; height: 100%; background: white; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transition: 0.4s; z-index: 2000; padding: 20px; display: flex; flex-direction: column; }
         .cart-sidebar.active { right: 0; }
@@ -51,7 +51,7 @@
         .overlay.active { display: block; }
         
         footer { text-align: center; padding: 40px; background: var(--blue); color: white; font-size: 0.9rem; }
-        footer a { color: var(--orange); text-decoration: none; }
+        .no-products { text-align: center; color: #888; padding: 50px 0; grid-column: 1 / -1; }
     </style>
 </head>
 <body>
@@ -73,15 +73,11 @@
 <section class="hero">
     <h2>Mindfulness in<br><span>Every Choice.</span></h2>
     <p>Ethical, Pure, and Mindfully Curated products for a better lifestyle.</p>
-    <div class="hero-btns">
-        <a href="#featured" class="btn-shop">Shop Now</a>
-    </div>
 </section>
 
 <div id="user-modal">
     <h3>Delivery Details</h3>
-    <p style="font-size: 12px; color: #666;">Please fill details to add product to cart</p>
-    <input type="text" id="cust_name" placeholder="Your Name" required>
+    <input type="text" id="cust_name" placeholder="Full Name" required>
     <input type="tel" id="cust_whatsapp" placeholder="WhatsApp Number" required>
     <input type="email" id="cust_email" placeholder="Email Address" required>
     <textarea id="cust_address" placeholder="Full Address with Pincode" rows="3" required></textarea>
@@ -89,9 +85,11 @@
     <button onclick="closeModal()" style="background:none; border:none; color:gray; cursor:pointer; margin-top:10px; width:100%;">Cancel</button>
 </div>
 
-<div class="container" id="featured">
+<div class="container">
     <div class="section-title"><h4>Featured Collection</h4></div>
-    <div id="product-list" class="product-grid"></div>
+    <div id="product-list" class="product-grid">
+        <div class="no-products">Loading fresh products...</div>
+    </div>
 </div>
 
 <div class="overlay" id="overlay" onclick="closeAll()"></div>
@@ -99,7 +97,7 @@
 <div class="cart-sidebar" id="cart-sidebar">
     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:15px;">
         <h3>My Cart</h3>
-        <i class="fas fa-times" style="cursor:pointer;" onclick="toggleCart()"></i>
+        <i class="fas fa-times" onclick="toggleCart()" style="cursor:pointer;"></i>
     </div>
     <div id="cart-items" style="flex:1; overflow-y:auto; margin-top:20px;"></div>
     <div style="border-top:1px solid #eee; padding-top:20px;">
@@ -111,8 +109,7 @@
 </div>
 
 <footer>
-    <p>&copy; 2026 The Nemi Mart. All rights reserved.</p>
-    <p>Support: <a href="mailto:thenemimart@gmail.com">thenemimart@gmail.com</a></p>
+    <p>&copy; 2026 The Nemi Mart. Support: <a href="mailto:thenemimart@gmail.com">thenemimart@gmail.com</a></p>
 </footer>
 
 <script>
@@ -120,21 +117,49 @@
     let cart = [];
     let pendingProduct = null;
 
+    // Google Drive Link Converter
+    function fixGDriveLink(link) {
+        if (link.includes('drive.google.com')) {
+            let id = "";
+            if (link.includes('id=')) {
+                id = link.split('id=')[1].split('&')[0];
+            } else {
+                id = link.split('/d/')[1].split('/')[0];
+            }
+            return `https://lh3.googleusercontent.com/u/0/d/${id}`;
+        }
+        return link;
+    }
+
     async function loadProducts() {
-        const { data: products } = await _supabase.from('products').select('*');
+        const { data: products, error } = await _supabase.from('products').select('*');
         const grid = document.getElementById('product-list');
-        if (products) {
-            grid.innerHTML = products.map(p => `
+        
+        if (!products || products.length === 0) {
+            grid.innerHTML = '<div class="no-products">Our shelves are being restocked. Check back soon!</div>';
+            return;
+        }
+
+        grid.innerHTML = products.map(p => {
+            const hasDiscount = p.original_price && p.original_price > p.price;
+            const finalImg = fixGDriveLink(p.image_url);
+            const freeShipping = p.is_free_shipping ? `<span class="delivery-tag"><i class="fas fa-truck"></i> Free Delivery</span>` : '';
+            
+            return `
                 <div class="product-card">
-                    <img src="${p.image_url}" onerror="this.src='https://via.placeholder.com/300?text=The+Nemi+Mart'">
+                    <img src="${finalImg}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/300?text=The+Nemi+Mart'">
                     <div class="product-info">
                         <h3>${p.name}</h3>
-                        <div class="price">₹${p.price}</div>
+                        <div class="price-container">
+                            <span class="discount-price">₹${p.price}</span>
+                            ${hasDiscount ? `<span class="original-price">₹${p.original_price}</span>` : ''}
+                        </div>
+                        ${freeShipping}
                         <button class="add-btn" onclick="checkUserAndAdd('${p.name}', ${p.price})">Add to Cart</button>
                     </div>
                 </div>
-            `).join('');
-        }
+            `;
+        }).join('');
     }
 
     function checkUserAndAdd(name, price) {
@@ -155,79 +180,55 @@
             email: document.getElementById('cust_email').value,
             address: document.getElementById('cust_address').value
         };
-
-        if(!details.name || !details.whatsapp || !details.email || !details.address) {
-            alert("Please fill all details!");
-            return;
-        }
-
+        if(!details.name || !details.whatsapp || !details.address) return alert("Please fill details!");
         localStorage.setItem('nemi_user_details', JSON.stringify(details));
         closeModal();
-        if(pendingProduct) {
-            addToCart(pendingProduct.name, pendingProduct.price);
-            pendingProduct = null;
-        }
+        if(pendingProduct) { addToCart(pendingProduct.name, pendingProduct.price); pendingProduct = null; }
     }
 
     function addToCart(name, price) {
         cart.push({ name, price });
         updateCartUI();
-        if(!document.getElementById('cart-sidebar').classList.contains('active')) toggleCart();
+        toggleCart(true);
     }
 
     function updateCartUI() {
         document.getElementById('cart-count').innerText = cart.length;
         let total = 0;
-        document.getElementById('cart-items').innerHTML = cart.map(item => {
+        document.getElementById('cart-items').innerHTML = cart.map((item, index) => {
             total += item.price;
-            return `<div class="cart-item"><span>${item.name}</span><b>₹${item.price}</b></div>`;
+            return `
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px; border-bottom:1px solid #f0f0f0; padding-bottom:10px;">
+                <div><b>${item.name}</b><br><span style="color:var(--orange)">₹${item.price}</span></div>
+                <i class="fas fa-trash" style="color:red; cursor:pointer;" onclick="removeFromCart(${index})"></i>
+            </div>`;
         }).join('');
         document.getElementById('total-amount').innerText = '₹' + total;
         sessionStorage.setItem('orderTotal', total);
     }
 
-    function toggleCart() {
-        document.getElementById('cart-sidebar').classList.toggle('active');
-        document.getElementById('overlay').classList.toggle('active');
+    function removeFromCart(index) { cart.splice(index, 1); updateCartUI(); }
+
+    function toggleCart(open = null) {
+        const side = document.getElementById('cart-sidebar');
+        const over = document.getElementById('overlay');
+        if(open === true) { side.classList.add('active'); over.classList.add('active'); }
+        else { side.classList.toggle('active'); over.classList.toggle('active'); }
     }
 
-    function closeModal() {
-        document.getElementById('user-modal').style.display = 'none';
-        document.getElementById('overlay').classList.remove('active');
-    }
+    function closeModal() { document.getElementById('user-modal').style.display = 'none'; document.getElementById('overlay').classList.remove('active'); }
+    function closeAll() { closeModal(); document.getElementById('cart-sidebar').classList.remove('active'); }
 
-    function closeAll() {
-        closeModal();
-        document.getElementById('cart-sidebar').classList.remove('active');
-    }
-
-    // --- Updated Proceed to Checkout Logic ---
     function proceedToCheckout() {
         if (cart.length === 0) return alert("Cart is empty!");
-
         const user = JSON.parse(localStorage.getItem('nemi_user_details'));
-        if (!user) return alert("Please fill details first!");
-
-        // Prepare WhatsApp message data
-        let itemList = cart.map(item => `- ${item.name} (₹${item.price})`).join('%0A');
-        let total = sessionStorage.getItem('orderTotal');
-
-        const message = `*NEW ORDER: THE NEMI MART*%0A%0A` +
-            `*Name:* ${user.name}%0A` +
-            `*WA:* ${user.whatsapp}%0A` +
-            `*Address:* ${user.address}%0A%0A` +
-            `*Items:*%0A${itemList}%0A%0A` +
-            `*Total:* ₹${total}`;
-
-        // Store message for later use on payment.html
-        sessionStorage.setItem('pendingOrderMessage', message);
-
-        // Redirect to your payment page
-        window.location.href = 'https://thenemimartshop.netlify.app/payment.html';
+        let itemsList = cart.map(i => `- ${i.name} (₹${i.price})`).join('%0A');
+        const orderMsg = `*New Order from The Nemi Mart*%0A%0A*Customer:* ${user.name}%0A*WhatsApp:* ${user.whatsapp}%0A*Address:* ${user.address}%0A%0A*Items:*%0A${itemsList}%0A%0A*Total Amount:* ₹${sessionStorage.getItem('orderTotal')}`;
+        sessionStorage.setItem('pendingOrderMessage', orderMsg);
+        window.location.href = 'payment.html';
     }
 
     window.onload = loadProducts;
 </script>
 </body>
 </html>
-

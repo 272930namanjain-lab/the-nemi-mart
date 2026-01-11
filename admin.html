@@ -4,23 +4,28 @@
     <meta charset="UTF-8">
     <title>Nemi Mart | Master Control</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --blue: #1a2332; --orange: #e68a00; }
         body { font-family: sans-serif; margin: 0; background: #f4f7f6; display: flex; flex-direction: column; }
-        header { background: var(--blue); color: white; padding: 15px; text-align: center; }
         
+        /* Security Overlay Style */
+        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--blue); z-index: 9999; display: flex; justify-content: center; align-items: center; color: white; flex-direction: column; }
+        .auth-card { background: white; padding: 40px; border-radius: 15px; text-align: center; color: var(--blue); width: 90%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .pass-container { position: relative; margin: 20px 0; }
+        .pass-container input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; padding-right: 40px; }
+        .pass-container i { position: absolute; right: 10px; top: 12px; cursor: pointer; color: #888; }
+        
+        header { background: var(--blue); color: white; padding: 15px; text-align: center; }
         .stats-container { display: flex; justify-content: center; gap: 20px; padding: 20px; background: #fff; border-bottom: 1px solid #eee; }
         .stat-box { background: #fff; border: 1px solid #ddd; padding: 15px 30px; border-radius: 10px; text-align: center; min-width: 150px; }
         .stat-box h2 { margin: 5px 0; color: var(--orange); }
         .stat-box p { margin: 0; font-size: 12px; font-weight: bold; color: #666; }
-
         .nav-tabs { display: flex; justify-content: center; gap: 10px; padding: 15px; background: #fff; }
         .tab-btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; background: #eee; }
         .active-tab { background: var(--orange); color: white; }
-        
         .container { padding: 20px; max-width: 1100px; margin: auto; width: 95%; }
         .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { padding: 12px; border: 1px solid #eee; text-align: left; font-size: 13px; }
         th { background: #f9f9f9; }
@@ -31,6 +36,19 @@
     </style>
 </head>
 <body>
+
+<div id="auth-overlay">
+    <div class="auth-card">
+        <i class="fas fa-shield-alt" style="font-size: 40px; color: var(--orange);"></i>
+        <h3>Admin Access</h3>
+        <p style="font-size: 12px; color: #666;">Hint: The supreme path of non-violence</p>
+        <div class="pass-container">
+            <input type="password" id="admin_pass" placeholder="Enter Access Code">
+            <i class="fas fa-eye" id="togglePass" onclick="toggleVisibility()"></i>
+        </div>
+        <button class="tab-btn active-tab" style="width: 100%;" onclick="checkAuth()">Verify Identity</button>
+    </div>
+</div>
 
 <header>
     <h1>The Nemi Mart Admin</h1>
@@ -113,7 +131,29 @@
 <script>
     const _supabase = supabase.createClient("https://rzmftpafcyxburlkwqnm.supabase.co", "sb_publishable_zt4Wt4wBgarEU15zF-RoKw_4achnceD");
 
-    // Google Drive Link Fixer Function
+    // Security Check
+    function checkAuth() {
+        const pass = document.getElementById('admin_pass').value;
+        if (pass === "Ahimsa Paramo Dharam") {
+            document.getElementById('auth-overlay').style.display = 'none';
+            loadData();
+        } else {
+            alert("Unauthorized Access!");
+        }
+    }
+
+    function toggleVisibility() {
+        const pInput = document.getElementById('admin_pass');
+        const icon = document.getElementById('togglePass');
+        if (pInput.type === "password") {
+            pInput.type = "text";
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            pInput.type = "password";
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    }
+
     function fixGDriveLink(link) {
         if (link.includes('drive.google.com')) {
             let id = "";
@@ -199,16 +239,9 @@
         const is_free_shipping = document.getElementById('p_free_shipping').value === "true";
 
         if(!name || !price || !raw_image_url) return alert("Please fill Name, Price and Image URL");
-
-        // Fix the image link before saving to Supabase
         const image_url = fixGDriveLink(raw_image_url);
-
         const { error } = await _supabase.from('products').insert([{ 
-            name, 
-            price, 
-            original_price, 
-            image_url, 
-            is_free_shipping 
+            name, price, original_price, image_url, is_free_shipping 
         }]);
 
         if(error) {
@@ -222,8 +255,6 @@
             document.getElementById('p_img').value = '';
         }
     }
-
-    window.onload = loadData;
 </script>
 </body>
 </html>

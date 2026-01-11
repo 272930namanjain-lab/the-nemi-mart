@@ -9,26 +9,32 @@
         :root { --primary-orange: #e68a00; --dark-blue: #1a2332; }
         body { font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; background: #f9f9f9; }
         .payment-box { background: white; padding: 30px; border-radius: 20px; max-width: 400px; margin: 0 auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .total-pay { font-size: 24px; font-weight: 800; color: var(--dark-blue); margin-bottom: 10px; }
         .qr-img { width: 100%; max-width: 250px; margin: 20px 0; border: 1px solid #eee; border-radius: 10px; }
-        .upi-id { background: #eee; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 14px; margin: 10px 0; }
-        input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-        .btn-verify { background: var(--primary-orange); color: white; border: none; padding: 15px; width: 100%; border-radius: 30px; font-weight: bold; cursor: pointer; }
+        .upi-id { background: #eee; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 14px; margin: 10px 0; display: inline-block; width: 100%; box-sizing: border-box; }
+        input { width: 100%; padding: 15px; margin: 15px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        .btn-verify { background: var(--primary-orange); color: white; border: none; padding: 15px; width: 100%; border-radius: 30px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        .btn-verify:disabled { background: #ccc; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
     <div class="payment-box">
-        <h2 style="color: var(--dark-blue);">Verify Payment</h2>
+        <h2 style="color: var(--dark-blue); margin-bottom: 5px;">Secure Payment</h2>
+        <div class="total-pay" id="display-amount">₹0</div>
         
         <p style="font-size: 14px; color: #666;">Scan QR to pay <b>Naman Jain</b></p>
-        <img src="qr code.png" class="qr-img" alt="UPI QR Code"> 
+        <img src="qr code.png" class="qr-img" alt="UPI QR Code" onerror="this.src='https://via.placeholder.com/250?text=Scan+to+Pay'"> 
+        
         <div class="upi-id">UPI ID: namanjain1730@sbi</div> 
-        <p style="font-size: 12px; color: #888;">Receiving in: STATE BANK OF INDIA 0130</p> 
+        <p style="font-size: 12px; color: #888;">STATE BANK OF INDIA 0130</p> 
+        
         <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
 
-        <p style="font-size: 14px; font-weight: bold;">Enter the 12-digit UTR/Reference No. after payment:</p> 
-        <input type="number" id="utr_input" placeholder="e.g. 4123XXXXXXXX">
-        <button class="btn-verify" onclick="submitOrder()">Verify & Submit Order</button>
+        <p style="font-size: 14px; font-weight: bold; color: var(--dark-blue);">Enter 12-digit UTR/Reference No. after payment:</p> 
+        <input type="text" id="utr_input" placeholder="e.g. 4123XXXXXXXX" maxlength="12">
+        
+        <button id="submit-btn" class="btn-verify" onclick="submitOrder()">Verify & Submit Order</button>
     </div>
 
     <script>
@@ -36,24 +42,41 @@
         const SB_KEY = "sb_publishable_zt4Wt4wBgarEU15zF-RoKw_4achnceD";
         const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
+        // Load amount from session
+        const amount = sessionStorage.getItem('orderTotal') || 0;
+        document.getElementById('display-amount').innerText = '₹' + amount;
+
         async function submitOrder() {
-            const utr = document.getElementById('utr_input').value;
+            const utrField = document.getElementById('utr_input');
+            const submitBtn = document.getElementById('submit-btn');
+            const utr = utrField.value.trim();
             
-            // Validation for 12 digits
-            if (utr.length !== 12) {
+            // Validation: Must be exactly 12 digits
+            if (utr.length !== 12 || isNaN(utr)) {
                 return alert("Please enter a valid 12-digit UTR number");
             }
 
-            // Get saved details from session/local storage
+            // Get saved details
             const orderMsg = sessionStorage.getItem('pendingOrderMessage');
             const user = JSON.parse(localStorage.getItem('nemi_user_details'));
-            const amount = sessionStorage.getItem('orderTotal') || 0;
 
-            // Supabase 'orders' table mein data save करना
+            if (!user) {
+                alert("Customer details not found. Please go back.");
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // UI Update: Disable button to prevent double clicks
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Processing Order...";
+
+            // Supabase 'orders' table insertion
             const { error } = await _supabase.from('orders').insert([
                 { 
-                    user_email: user ? user.email : 'Unknown',
-                    product_name: "Cart Order",
+                    user_name: user.name,
+                    user_email: user.email,
+                    user_whatsapp: user.whatsapp,
+                    user_address: user.address,
                     amount: amount,
                     utr_number: utr,
                     status: 'Pending'
@@ -61,17 +84,16 @@
             ]);
 
             if (error) {
-                alert("Error saving order: " + error.message);
+                alert("Database Error: " + error.message);
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Verify & Submit Order";
             } else {
-                alert("Payment Verified! अब आपको ऑर्डर कन्फर्मेशन के लिए WhatsApp पर भेजा जा रहा है।");
+                alert("ऑर्डर सबमिट हो गया है! अब आपको WhatsApp पर भेजा जा रहा है।");
                 
-                // WhatsApp Number
                 const myWhatsApp = "918248997125"; 
-                
-                // Final Message with UTR
-                const finalMessage = orderMsg + `%0A*UTR No:* ${utr}%0A*Status:* Payment Submitted`;
+                const finalMessage = orderMsg + `%0A%0A*UTR No:* ${utr}%0A*Status:* Payment Submitted via Portal`;
 
-                // Redirect to WhatsApp
+                // Redirect to WhatsApp with full details
                 window.location.href = `https://wa.me/${myWhatsApp}?text=${finalMessage}`;
             }
         }

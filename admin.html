@@ -27,19 +27,18 @@
         .active-tab { background: var(--orange); color: white; }
         
         .container { padding: 20px; max-width: 1400px; margin: auto; width: 98%; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; overflow-x: auto; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 1000px; }
-        th, td { padding: 12px; border: 1px solid #eee; text-align: left; font-size: 13px; vertical-align: top; }
-        th { background: #f9f9f9; font-weight: bold; color: var(--blue); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; border: 1px solid #eee; text-align: left; font-size: 13px; }
+        th { background: #f9f9f9; color: var(--blue); }
         
-        input, select, textarea { padding: 8px; border: 1px solid #ddd; border-radius: 6px; margin: 2px 0; width: 100%; box-sizing: border-box; font-size: 13px; }
-        .btn-delete { color: #d32f2f; background: none; border: none; cursor: pointer; font-weight: bold; padding: 5px; }
-        .btn-edit { color: var(--edit-blue); background: none; border: none; cursor: pointer; font-weight: bold; margin-right: 10px; }
-        .badge-free { background: #e8f5e9; color: var(--green); padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
-        .prod-img-preview { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; background: #eee; }
-        .address-cell { max-width: 200px; word-wrap: break-word; font-size: 11px; line-height: 1.4; color: #444; }
-        .items-cell { font-style: italic; color: #555; font-size: 11px; }
+        input, select, textarea { padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+        .btn-delete { color: #d32f2f; background: none; border: none; cursor: pointer; font-weight: bold; font-size: 16px; }
+        .btn-edit { color: var(--edit-blue); background: none; border: none; cursor: pointer; font-weight: bold; font-size: 16px; margin-right: 10px; }
+        .prod-img-preview { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; }
+
+        #form-title { color: var(--blue); border-bottom: 2px solid var(--orange); display: inline-block; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -59,38 +58,31 @@
 
 <header>
     <h1>The Nemi Mart Admin</h1>
-    <p style="font-size: 12px;">Manage Orders, Inventory & Logistics</p>
+    <p>Inventory & Logistics Control Panel</p>
 </header>
 
 <div class="stats-container">
-    <div class="stat-box">
-        <p>TOTAL SALES</p>
-        <h2 id="total-revenue">₹0</h2>
-    </div>
-    <div class="stat-box">
-        <p>TOTAL ORDERS</p>
-        <h2 id="total-orders">0</h2>
-    </div>
+    <div class="stat-box"><p>TOTAL REVENUE</p><h2 id="total-revenue">₹0</h2></div>
+    <div class="stat-box"><p>TOTAL ORDERS</p><h2 id="total-orders">0</h2></div>
 </div>
 
 <div class="nav-tabs">
-    <button class="tab-btn active-tab" onclick="openTab('orders')">Orders & Logistics</button>
-    <button class="tab-btn" onclick="openTab('products')">Inventory & Pricing</button>
+    <button class="tab-btn active-tab" id="tab-orders" onclick="openTab('orders')">Orders</button>
+    <button class="tab-btn" id="tab-products" onclick="openTab('products')">Inventory</button>
 </div>
 
 <div class="container">
     <div id="orders-sec">
-        <div class="card">
-            <h3>Manage Orders & Logistics</h3>
+        <div class="card" style="overflow-x:auto;">
+            <h3>Recent Orders</h3>
             <table>
                 <thead>
                     <tr>
-                        <th>Date & Customer</th>
-                        <th>Order Details</th>
-                        <th>Address</th>
-                        <th>UTR & Amount</th>
+                        <th>Customer</th>
+                        <th>Details</th>
+                        <th>Payment</th>
                         <th>Status</th>
-                        <th>Logistics</th>
+                        <th>Tracking</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -101,15 +93,17 @@
 
     <div id="products-sec" style="display:none;">
         <div class="card">
-            <h3 id="form-title">Add/Edit Product</h3>
+            <h3 id="form-title">Add New Product</h3>
             <input type="hidden" id="edit-p-id">
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+            
+            <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px;">
                 <input type="text" id="p_name" placeholder="Product Name">
-                <input type="number" id="p_original" placeholder="MRP (Strike Price)">
-                <input type="number" id="p_price" placeholder="Sale Price (Actual)">
+                <input type="number" id="p_original" placeholder="MRP Price">
+                <input type="number" id="p_price" placeholder="Our Sale Price">
             </div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                <input type="text" id="p_category" placeholder="Category">
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                <input type="text" id="p_category" placeholder="Category (e.g. Pure Essentials)">
                 <select id="p_stock">
                     <option value="In Stock">In Stock</option>
                     <option value="Out of Stock">Out of Stock</option>
@@ -119,23 +113,26 @@
                     <option value="false">Free Delivery: NO</option>
                 </select>
             </div>
-            <input type="text" id="p_img" placeholder="Image URL (Google Drive or Direct)">
-            <textarea id="p_description" placeholder="Product Description"></textarea>
             
-            <button id="add-btn" class="tab-btn active-tab" style="margin-top:10px; width:100%" onclick="saveProduct()">Save Product</button>
-            <button id="cancel-btn" class="tab-btn" style="width:100%; margin-top:5px; display:none;" onclick="resetProductForm()">Cancel Edit</button>
+            <input type="text" id="p_img" placeholder="Product Image URL">
+            <textarea id="p_description" placeholder="Full Product Description" rows="4"></textarea>
+            
+            <div style="display:flex; gap:10px;">
+                <button id="add-btn" class="tab-btn active-tab" style="flex:2;" onclick="saveProduct()">Save Product Details</button>
+                <button id="cancel-btn" class="tab-btn" style="flex:1; display:none; background:#ccc;" onclick="resetProductForm()">Cancel</button>
+            </div>
         </div>
 
-        <div class="card">
-            <h3>Current Inventory</h3>
+        <div class="card" style="overflow-x:auto;">
+            <h3>Live Inventory</h3>
             <table>
                 <thead>
                     <tr>
                         <th>Image</th>
-                        <th>Product Info</th>
+                        <th>Product Name</th>
                         <th>Pricing</th>
-                        <th>Stock</th>
-                        <th>Action</th>
+                        <th>Stock Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="inventory-rows"></tbody>
@@ -151,7 +148,7 @@
         if (document.getElementById('admin_pass').value === "Ahimsa Paramo Dharam") {
             document.getElementById('auth-overlay').style.display = 'none';
             loadData();
-        } else { alert("Unauthorized!"); }
+        } else { alert("Access Denied!"); }
     }
 
     function toggleVisibility() {
@@ -164,28 +161,22 @@
         document.getElementById('orders-sec').style.display = tab === 'orders' ? 'block' : 'none';
         document.getElementById('products-sec').style.display = tab === 'products' ? 'block' : 'none';
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
-        event.target.classList.add('active-tab');
+        document.getElementById('tab-' + tab).classList.add('active-tab');
     }
 
     async function loadData() {
         const { data: orders } = await _supabase.from('orders').select('*').order('created_at', { ascending: false });
         const { data: products } = await _supabase.from('products').select('*').order('created_at', { ascending: false });
         
+        // Render Orders
         if (orders) {
             document.getElementById('total-revenue').innerText = '₹' + orders.reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
             document.getElementById('total-orders').innerText = orders.length;
             document.getElementById('order-rows').innerHTML = orders.map(o => `
                 <tr>
-                    <td>
-                        <b>${o.user_name || 'N/A'}</b><br>
-                        <a href="https://wa.me/${o.user_whatsapp}" target="_blank" style="text-decoration:none; color:green; font-size:11px;">
-                            <i class="fab fa-whatsapp"></i> ${o.user_whatsapp || 'No No.'}
-                        </a><br>
-                        <small style="color:#888">${new Date(o.created_at).toLocaleDateString()}</small>
-                    </td>
-                    <td class="items-cell">${o.order_details ? o.order_details.replace(/%0A/g, '<br>') : 'N/A'}</td>
-                    <td class="address-cell">${o.address || 'N/A'}</td>
-                    <td><span style="color:blue;">${o.utr_number}</span><br><b>₹${o.amount}</b></td>
+                    <td><b>${o.user_name}</b><br><small>${o.user_whatsapp}</small></td>
+                    <td><small>${o.order_details ? o.order_details.replace(/%0A/g, '<br>') : ''}</small></td>
+                    <td>₹${o.amount}<br><small style="color:blue">${o.utr_number}</small></td>
                     <td>
                         <select onchange="updateOrder('${o.id}', 'status', this.value)">
                             <option ${o.status=='Pending'?'selected':''}>Pending</option>
@@ -195,7 +186,7 @@
                         </select>
                     </td>
                     <td>
-                        <input type="text" placeholder="Courier" value="${o.courier_name || ''}" onblur="updateOrder('${o.id}', 'courier_name', this.value)">
+                        <input type="text" placeholder="Courier" value="${o.courier_name || ''}" onblur="updateOrder('${o.id}', 'courier_name', this.value)" style="margin-bottom:2px">
                         <input type="text" placeholder="Tracking Link" value="${o.tracking_url || ''}" onblur="updateOrder('${o.id}', 'tracking_url', this.value)">
                     </td>
                     <td><button class="btn-delete" onclick="deleteRow('orders', '${o.id}')"><i class="fas fa-trash"></i></button></td>
@@ -203,15 +194,16 @@
             `).join('');
         }
 
+        // Render Inventory
         if (products) {
             document.getElementById('inventory-rows').innerHTML = products.map(p => `
                 <tr>
-                    <td><img src="${p.image_url}" class="prod-img-preview"></td>
+                    <td><img src="${p.image_url}" class="prod-img-preview" onerror="this.src='https://via.placeholder.com/50'"></td>
                     <td><b>${p.name}</b><br><small>${p.category || ''}</small></td>
-                    <td><del style="color:red; font-size:11px;">₹${p.original_price}</del> <b>₹${p.price}</b></td>
-                    <td>${p.stock_status}</td>
+                    <td><del>₹${p.original_price}</del> <b>₹${p.price}</b></td>
+                    <td><span style="color:${p.stock_status === 'In Stock' ? 'green' : 'red'}">${p.stock_status}</span></td>
                     <td>
-                        <button class="btn-edit" onclick='editProduct(${JSON.stringify(p)})'><i class="fas fa-edit"></i></button>
+                        <button class="btn-edit" onclick='prepareEdit(${JSON.stringify(p).replace(/'/g, "&apos;")})'><i class="fas fa-edit"></i> Edit</button>
                         <button class="btn-delete" onclick="deleteRow('products', '${p.id}')"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>
@@ -219,9 +211,30 @@
         }
     }
 
+    // --- Product Edit Feature ---
+    function prepareEdit(p) {
+        document.getElementById('form-title').innerText = "Edit Product: " + p.name;
+        document.getElementById('edit-p-id').value = p.id;
+        document.getElementById('p_name').value = p.name;
+        document.getElementById('p_original').value = p.original_price;
+        document.getElementById('p_price').value = p.price;
+        document.getElementById('p_category').value = p.category || "";
+        document.getElementById('p_stock').value = p.stock_status;
+        document.getElementById('p_free_shipping').value = p.is_free_shipping.toString();
+        document.getElementById('p_img').value = p.image_url;
+        document.getElementById('p_description').value = p.description || "";
+        
+        document.getElementById('add-btn').innerText = "Update Product Info";
+        document.getElementById('add-btn').style.background = "var(--edit-blue)";
+        document.getElementById('cancel-btn').style.display = "block";
+        
+        // Scroll to top to see the form
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     async function saveProduct() {
         const id = document.getElementById('edit-p-id').value;
-        const data = {
+        const productData = {
             name: document.getElementById('p_name').value,
             original_price: document.getElementById('p_original').value,
             price: document.getElementById('p_price').value,
@@ -232,29 +245,41 @@
             description: document.getElementById('p_description').value
         };
 
-        const { error } = id ? await _supabase.from('products').update(data).eq('id', id) : await _supabase.from('products').insert([data]);
-        if(error) alert("Error: " + error.message);
-        else { alert("Success!"); resetProductForm(); loadData(); }
-    }
+        if(!productData.name || !productData.price) return alert("Product Name and Price are required!");
 
-    function editProduct(p) {
-        document.getElementById('edit-p-id').value = p.id;
-        document.getElementById('p_name').value = p.name;
-        document.getElementById('p_original').value = p.original_price;
-        document.getElementById('p_price').value = p.price;
-        document.getElementById('p_category').value = p.category;
-        document.getElementById('p_stock').value = p.stock_status;
-        document.getElementById('p_free_shipping').value = p.is_free_shipping.toString();
-        document.getElementById('p_img').value = p.image_url;
-        document.getElementById('p_description').value = p.description;
-        document.getElementById('cancel-btn').style.display = 'block';
-        window.scrollTo(0,0);
+        let result;
+        if (id) {
+            // Update Existing
+            result = await _supabase.from('products').update(productData).eq('id', id);
+        } else {
+            // Insert New
+            result = await _supabase.from('products').insert([productData]);
+        }
+
+        if (result.error) {
+            alert("Error: " + result.error.message);
+        } else {
+            alert(id ? "Product Updated!" : "New Product Added!");
+            resetProductForm();
+            loadData();
+        }
     }
 
     function resetProductForm() {
+        document.getElementById('form-title').innerText = "Add New Product";
         document.getElementById('edit-p-id').value = "";
-        ['p_name', 'p_original', 'p_price', 'p_category', 'p_img', 'p_description'].forEach(i => document.getElementById(i).value = '');
-        document.getElementById('cancel-btn').style.display = 'none';
+        document.getElementById('p_name').value = "";
+        document.getElementById('p_original').value = "";
+        document.getElementById('p_price').value = "";
+        document.getElementById('p_category').value = "";
+        document.getElementById('p_img').value = "";
+        document.getElementById('p_description').value = "";
+        document.getElementById('p_stock').selectedIndex = 0;
+        document.getElementById('p_free_shipping').selectedIndex = 0;
+        
+        document.getElementById('add-btn').innerText = "Save Product Details";
+        document.getElementById('add-btn').style.background = "var(--orange)";
+        document.getElementById('cancel-btn').style.display = "none";
     }
 
     async function updateOrder(id, field, value) {
@@ -263,7 +288,11 @@
     }
 
     async function deleteRow(table, id) {
-        if(confirm("Are you sure?")) { await _supabase.from(table).delete().eq('id', id); loadData(); }
+        if(confirm("Permanently delete this item?")) {
+            const { error } = await _supabase.from(table).delete().eq('id', id);
+            if(error) alert(error.message);
+            else loadData();
+        }
     }
 </script>
 </body>

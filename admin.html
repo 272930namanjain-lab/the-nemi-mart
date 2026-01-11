@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --blue: #1a2332; --orange: #e68a00; --green: #2e7d32; --edit-blue: #0275d8; }
+        :root { --blue: #1a2332; --orange: #e68a00; --green: #2e7d32; --edit-blue: #0275d8; --purple: #673ab7; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f7f6; display: flex; flex-direction: column; }
         
         #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--blue); z-index: 9999; display: flex; justify-content: center; align-items: center; color: white; flex-direction: column; }
@@ -34,13 +34,11 @@
         th { background: #f8f9fa; color: var(--blue); font-weight: 800; }
         
         input, select, textarea { padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin: 8px 0; width: 100%; box-sizing: border-box; font-size: 14px; }
-        input:focus, textarea:focus { border-color: var(--orange); outline: none; box-shadow: 0 0 5px rgba(230, 138, 0, 0.2); }
-
         .btn-delete { color: #d32f2f; background: none; border: none; cursor: pointer; font-weight: bold; font-size: 16px; padding: 5px; }
         .btn-edit { color: var(--edit-blue); background: #e3f2fd; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; margin-right: 10px; }
+        .btn-reward { background: var(--purple); color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; margin-top: 5px; width: 100%; }
+        .ref-tag { background: #fff3e0; color: #e65100; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; display: inline-block; margin-top: 4px; border: 1px solid #ffe0b2; }
         .prod-img-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; background: #eee; }
-
-        #form-title { color: var(--blue); border-bottom: 3px solid var(--orange); padding-bottom: 5px; margin-bottom: 20px; font-size: 1.2rem; }
     </style>
 </head>
 <body>
@@ -49,7 +47,6 @@
     <div class="auth-card">
         <i class="fas fa-user-shield" style="font-size: 45px; color: var(--orange);"></i>
         <h2 style="margin: 15px 0 5px;">Admin Login</h2>
-        <p style="font-size: 12px; color: #666; margin-bottom: 20px;">The Nemi Mart Management System</p>
         <div class="pass-container">
             <input type="password" id="admin_pass" placeholder="Enter Admin Access Code">
             <i class="fas fa-eye" id="togglePass" onclick="toggleVisibility()"></i>
@@ -82,7 +79,7 @@
                 <thead>
                     <tr>
                         <th>Date</th>
-                        <th>Customer</th>
+                        <th>Customer & Referral</th>
                         <th>Order Items</th>
                         <th>Payment Detail</th>
                         <th>Order Status</th>
@@ -118,7 +115,7 @@
             <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 10px;">
                 <div>
                     <label style="font-size:12px; font-weight:bold;">Category</label>
-                    <input type="text" id="p_category" placeholder="Organic / Pure / Oils">
+                    <input type="text" id="p_category" placeholder="Organic / Pure">
                 </div>
                 <div>
                     <label style="font-size:12px; font-weight:bold;">Stock Availability</label>
@@ -138,23 +135,23 @@
             
             <div style="margin-top: 10px;">
                 <label style="font-size:12px; font-weight:bold;">Product Image URL</label>
-                <input type="text" id="p_img" placeholder="Paste Google Drive or Direct Image Link" oninput="document.getElementById('img-preview-box').src = this.value">
-                <img id="img-preview-box" src="" style="max-height: 80px; margin-top: 5px; border-radius: 5px; border: 1px solid #eee;">
+                <input type="text" id="p_img" placeholder="Paste Link" oninput="document.getElementById('img-preview-box').src = this.value">
+                <img id="img-preview-box" src="" style="max-height: 80px; margin-top: 5px; border-radius: 5px;">
             </div>
 
             <div style="margin-top: 10px;">
-                <label style="font-size:12px; font-weight:bold;">Detailed Description (Shown in View Details page)</label>
-                <textarea id="p_description" placeholder="Write full details, benefits, and usage of the product..." rows="6"></textarea>
+                <label style="font-size:12px; font-weight:bold;">Detailed Description</label>
+                <textarea id="p_description" placeholder="Write full details..." rows="4"></textarea>
             </div>
             
             <div style="display:flex; gap:10px; margin-top: 15px;">
-                <button id="add-btn" class="tab-btn active-tab" style="flex:2; height: 50px;" onclick="saveProduct()">Save Product to Store</button>
-                <button id="cancel-btn" class="tab-btn" style="flex:1; display:none; background:#ccc;" onclick="resetProductForm()">Cancel Edit</button>
+                <button id="add-btn" class="tab-btn active-tab" style="flex:2; height: 50px;" onclick="saveProduct()">Save Product</button>
+                <button id="cancel-btn" class="tab-btn" style="flex:1; display:none; background:#ccc;" onclick="resetProductForm()">Cancel</button>
             </div>
         </div>
 
         <div class="card" style="overflow-x:auto;">
-            <h3><i class="fas fa-warehouse" style="color:var(--orange)"></i> Current Inventory Stats</h3>
+            <h3><i class="fas fa-warehouse" style="color:var(--orange)"></i> Current Inventory</h3>
             <table>
                 <thead>
                     <tr>
@@ -178,7 +175,7 @@
         if (document.getElementById('admin_pass').value === "Ahimsa Paramo Dharam") {
             document.getElementById('auth-overlay').style.display = 'none';
             loadData();
-        } else { alert("Unauthorized Access! Verification Failed."); }
+        } else { alert("Verification Failed."); }
     }
 
     function toggleVisibility() {
@@ -198,31 +195,33 @@
         const { data: orders } = await _supabase.from('orders').select('*').order('created_at', { ascending: false });
         const { data: products } = await _supabase.from('products').select('*').order('created_at', { ascending: false });
         
-        // Render Orders
+        // Render Orders & Stats
         if (orders) {
             document.getElementById('total-revenue').innerText = '₹' + orders.reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
             document.getElementById('total-orders').innerText = orders.length;
-            document.getElementById('order-rows').innerHTML = orders.map(o => `
-                <tr>
+            document.getElementById('order-rows').innerHTML = orders.map(o => {
+                let referralHTML = o.referred_by ? `
+                    <div class="ref-tag"><i class="fas fa-gift"></i> Ref: ${o.referred_by}</div>
+                    ${o.referral_reward_pending ? 
+                        `<button class="btn-reward" onclick="approveReferralReward('${o.id}', '${o.referred_by}')">Approve ₹10 Reward</button>` : 
+                        `<div style="font-size:10px; color:green; margin-top:5px;"><i class="fas fa-check-circle"></i> Paid</div>`}
+                ` : "";
+
+                return `<tr>
                     <td><small>${new Date(o.created_at).toLocaleDateString()}</small></td>
-                    <td><b>${o.user_name}</b><br><small><i class="fab fa-whatsapp"></i> ${o.user_whatsapp}</small></td>
-                    <td><div style="max-height:60px; overflow-y:auto; font-size:11px;">${o.order_details ? o.order_details.replace(/%0A/g, '<br>') : ''}</div></td>
+                    <td><b>${o.user_name}</b><br><small>${o.user_whatsapp}</small><br>${referralHTML}</td>
+                    <td><div style="font-size:11px;">${o.order_details ? o.order_details.replace(/%0A/g, '<br>') : ''}</div></td>
                     <td>₹${o.amount}<br><small style="color:blue">UTR: ${o.utr_number}</small></td>
-                    <td>
-                        <select onchange="updateOrder('${o.id}', 'status', this.value)" style="padding:5px; width:auto; font-size:12px;">
-                            <option ${o.status=='Pending'?'selected':''}>Pending</option>
-                            <option ${o.status=='Verified'?'selected':''}>Verified</option>
-                            <option ${o.status=='Shipped'?'selected':''}>Shipped</option>
-                            <option ${o.status=='Delivered'?'selected':''}>Delivered</option>
-                        </select>
-                    </td>
-                    <td>
-                        <input type="text" placeholder="Courier" value="${o.courier_name || ''}" onblur="updateOrder('${o.id}', 'courier_name', this.value)" style="margin-bottom:2px; padding:5px; font-size:11px;">
-                        <input type="text" placeholder="Tracking Link" value="${o.tracking_url || ''}" onblur="updateOrder('${o.id}', 'tracking_url', this.value)" style="padding:5px; font-size:11px;">
-                    </td>
-                    <td><button class="btn-delete" onclick="deleteRow('orders', '${o.id}')"><i class="fas fa-trash-alt"></i></button></td>
-                </tr>
-            `).join('');
+                    <td><select onchange="updateOrder('${o.id}', 'status', this.value)">
+                        <option ${o.status=='Pending'?'selected':''}>Pending</option>
+                        <option ${o.status=='Verified'?'selected':''}>Verified</option>
+                        <option ${o.status=='Shipped'?'selected':''}>Shipped</option>
+                        <option ${o.status=='Delivered'?'selected':''}>Delivered</option>
+                    </select></td>
+                    <td><input type="text" value="${o.courier_name || ''}" placeholder="Courier" onblur="updateOrder('${o.id}', 'courier_name', this.value)"></td>
+                    <td><button class="btn-delete" onclick="deleteRow('orders', '${o.id}')"><i class="fas fa-trash"></i></button></td>
+                </tr>`;
+            }).join('');
         }
 
         // Render Inventory
@@ -230,23 +229,36 @@
             document.getElementById('total-products').innerText = products.length;
             document.getElementById('inventory-rows').innerHTML = products.map(p => {
                 const safeJson = JSON.stringify(p).replace(/'/g, "&apos;");
-                return `
-                <tr>
+                return `<tr>
                     <td><img src="${p.image_url}" class="prod-img-preview" onerror="this.src='https://via.placeholder.com/60'"></td>
-                    <td><b>${p.name}</b><br><small style="color:#777">${p.category || 'General'}</small></td>
-                    <td><del style="color:red; font-size:11px;">₹${p.original_price}</del><br><b>₹${p.price}</b></td>
-                    <td><span style="padding:4px 8px; border-radius:15px; font-size:10px; font-weight:bold; background:${p.stock_status === 'In Stock' ? '#e8f5e9' : '#ffebee'}; color:${p.stock_status === 'In Stock' ? 'green' : 'red'}">${p.stock_status.toUpperCase()}</span></td>
+                    <td><b>${p.name}</b><br><small>${p.category || ''}</small></td>
+                    <td><del>₹${p.original_price}</del><br><b>₹${p.price}</b></td>
+                    <td><span style="color:${p.stock_status==='In Stock'?'green':'red'}">${p.stock_status}</span></td>
                     <td>
-                        <button class="btn-edit" onclick='prepareEdit(${safeJson})'><i class="fas fa-pen-nib"></i> Edit</button>
-                        <button class="btn-delete" onclick="deleteRow('products', '${p.id}')"><i class="fas fa-trash-alt"></i></button>
+                        <button class="btn-edit" onclick='prepareEdit(${safeJson})'>Edit</button>
+                        <button class="btn-delete" onclick="deleteRow('products', '${p.id}')"><i class="fas fa-trash"></i></button>
                     </td>
-                </tr>
-            `}).join('');
+                </tr>`;
+            }).join('');
         }
     }
 
+    // --- REWARD LOGIC ---
+    async function approveReferralReward(orderId, referrerCode) {
+        if (!confirm(`Rewarding ₹10 & Free Delivery credit to ${referrerCode}?`)) return;
+        const { data: prof } = await _supabase.from('profiles').select('*').eq('referral_code', referrerCode).single();
+        if (prof) {
+            await _supabase.from('profiles').update({ 
+                wallet_balance: (Number(prof.wallet_balance)||0)+10, 
+                free_delivery_credits: (Number(prof.free_delivery_credits)||0)+1 
+            }).eq('id', prof.id);
+            await _supabase.from('orders').update({ referral_reward_pending: false }).eq('id', orderId);
+            alert("Reward Sent!"); loadData();
+        }
+    }
+
+    // --- PRODUCT LOGIC ---
     function prepareEdit(p) {
-        document.getElementById('form-title').innerText = "Updating: " + p.name;
         document.getElementById('edit-p-id').value = p.id;
         document.getElementById('p_name').value = p.name;
         document.getElementById('p_original').value = p.original_price;
@@ -257,19 +269,16 @@
         document.getElementById('p_img').value = p.image_url;
         document.getElementById('img-preview-box').src = p.image_url;
         document.getElementById('p_description').value = p.description || "";
-        
-        document.getElementById('add-btn').innerText = "Apply Changes & Update Store";
-        document.getElementById('add-btn').style.background = "var(--edit-blue)";
+        document.getElementById('add-btn').innerText = "Update Product";
         document.getElementById('cancel-btn').style.display = "block";
-        
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo(0,0);
     }
 
     async function saveProduct() {
         const id = document.getElementById('edit-p-id').value;
-        const productData = {
+        const pData = {
             name: document.getElementById('p_name').value,
-            original_price: document.getElementById('p_original').value || 0,
+            original_price: document.getElementById('p_original').value,
             price: document.getElementById('p_price').value,
             category: document.getElementById('p_category').value,
             stock_status: document.getElementById('p_stock').value,
@@ -277,54 +286,28 @@
             image_url: document.getElementById('p_img').value,
             description: document.getElementById('p_description').value
         };
-
-        if(!productData.name || !productData.price) return alert("Error: Product Name and Sale Price are mandatory!");
-
-        let result;
-        if (id) {
-            result = await _supabase.from('products').update(productData).eq('id', id);
-        } else {
-            result = await _supabase.from('products').insert([productData]);
-        }
-
-        if (result.error) {
-            alert("Database Error: " + result.error.message);
-        } else {
-            alert(id ? "Success: Product details updated!" : "Success: New product launched in store!");
-            resetProductForm();
-            loadData();
-        }
+        if(id) await _supabase.from('products').update(pData).eq('id', id);
+        else await _supabase.from('products').insert([pData]);
+        resetProductForm(); loadData();
     }
 
     function resetProductForm() {
-        document.getElementById('form-title').innerText = "Add New Product";
         document.getElementById('edit-p-id').value = "";
-        document.getElementById('p_name').value = "";
-        document.getElementById('p_original').value = "";
-        document.getElementById('p_price').value = "";
-        document.getElementById('p_category').value = "";
-        document.getElementById('p_img').value = "";
-        document.getElementById('img-preview-box').src = "";
-        document.getElementById('p_description').value = "";
-        document.getElementById('p_stock').selectedIndex = 0;
-        document.getElementById('p_free_shipping').selectedIndex = 0;
-        
-        document.getElementById('add-btn').innerText = "Save Product to Store";
-        document.getElementById('add-btn').style.background = "var(--orange)";
+        document.getElementById('add-btn').innerText = "Save Product";
         document.getElementById('cancel-btn').style.display = "none";
+        document.querySelectorAll('#products-sec input, #products-sec textarea').forEach(i => i.value = "");
+        document.getElementById('img-preview-box').src = "";
     }
 
     async function updateOrder(id, field, value) {
         const d = {}; d[field] = value;
-        const { error } = await _supabase.from('orders').update(d).eq('id', id);
-        if(error) alert("Status Update Failed: " + error.message);
+        await _supabase.from('orders').update(d).eq('id', id);
     }
 
     async function deleteRow(table, id) {
-        if(confirm("Action Required: Are you sure you want to permanently delete this " + table.slice(0,-1) + "?")) {
-            const { error } = await _supabase.from(table).delete().eq('id', id);
-            if(error) alert("Deletion Failed: " + error.message);
-            else loadData();
+        if(confirm("Confirm Delete?")) {
+            await _supabase.from(table).delete().eq('id', id);
+            loadData();
         }
     }
 </script>

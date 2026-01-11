@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login / Signup | The Nemi Mart</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --blue: #1a2332; --orange: #e68a00; --light: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--light); display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .auth-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        .logo-img { width: 70px; margin-bottom: 20px; }
+        h2 { color: var(--blue); margin-bottom: 30px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        .btn-auth { background: var(--blue); color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+        .btn-auth:hover { background: var(--orange); }
+        .toggle-link { margin-top: 20px; display: block; color: var(--orange); text-decoration: none; font-size: 14px; font-weight: 600; }
+        #auth-error { color: #e74c3c; font-size: 14px; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="auth-card">
+    <img src="logo.png" class="logo-img">
+    <h2 id="auth-title">Welcome Back</h2>
+    
+    <div id="signup-fields" style="display: none;">
+        <input type="text" id="full-name" placeholder="Full Name">
+        <input type="number" id="whatsapp" placeholder="WhatsApp Number">
+    </div>
+    
+    <input type="email" id="email" placeholder="Email Address">
+    <input type="password" id="password" placeholder="Password">
+    
+    <p id="auth-error"></p>
+    
+    <button class="btn-auth" id="btn-submit" onclick="handleAuth()">Login</button>
+    
+    <a href="#" class="toggle-link" id="toggle-btn" onclick="toggleMode()">New here? Create an Account</a>
+</div>
+
+<script>
+    const _supabase = supabase.createClient("https://rzmftpafcyxburlkwqnm.supabase.co", "sb_publishable_zt4Wt4wBgarEU15zF-RoKw_4achnceD");
+    
+    let isLogin = true;
+
+    function toggleMode() {
+        isLogin = !isLogin;
+        document.getElementById('auth-title').innerText = isLogin ? "Welcome Back" : "Join The Nemi Mart";
+        document.getElementById('signup-fields').style.display = isLogin ? "none" : "block";
+        document.getElementById('btn-submit').innerText = isLogin ? "Login" : "Sign Up";
+        document.getElementById('toggle-btn').innerText = isLogin ? "New here? Create an Account" : "Already have an account? Login";
+    }
+
+    async function handleAuth() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const errorEl = document.getElementById('auth-error');
+        errorEl.style.display = "none";
+
+        if (isLogin) {
+            // LOGIN LOGIC
+            const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+            if (error) {
+                errorEl.innerText = error.message;
+                errorEl.style.display = "block";
+            } else {
+                window.location.href = 'index.html';
+            }
+        } else {
+            // SIGNUP LOGIC
+            const fullName = document.getElementById('full-name').value;
+            const whatsapp = document.getElementById('whatsapp').value;
+            
+            if (!fullName || !whatsapp) {
+                errorEl.innerText = "Please fill all fields";
+                errorEl.style.display = "block";
+                return;
+            }
+
+            const { data, error } = await _supabase.auth.signUp({ email, password });
+            
+            if (error) {
+                errorEl.innerText = error.message;
+                errorEl.style.display = "block";
+            } else if (data.user) {
+                // Profile table mein additional details save karein
+                await _supabase.from('profiles').insert([
+                    { 
+                        id: data.user.id, 
+                        full_name: fullName, 
+                        whatsapp: whatsapp,
+                        referral_code: fullName.toLowerCase().replace(/\s/g, '') + Math.floor(100 + Math.random() * 900)
+                    }
+                ]);
+                alert("Signup successful! Please login.");
+                toggleMode();
+            }
+        }
+    }
+</script>
+</body>
+</html>

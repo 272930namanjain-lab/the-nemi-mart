@@ -25,6 +25,14 @@
         .category-tag { color: var(--orange); font-weight: bold; text-transform: uppercase; font-size: 14px; letter-spacing: 1px; }
         .price { font-size: 2.5rem; font-weight: 800; color: var(--blue); margin: 15px 0; }
         
+        /* Referral Surprise Box */
+        #ref-alert { 
+            background: #e8f5e9; color: #2e7d32; padding: 15px; border-radius: 10px; 
+            margin-bottom: 20px; border-left: 5px solid #4caf50; display: none;
+            animation: slideIn 0.5s ease;
+        }
+        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
         .desc-container { margin: 25px 0; padding-top: 20px; border-top: 1px solid #eee; }
         .desc-title { font-weight: 800; color: var(--blue); margin-bottom: 10px; display: block; font-size: 1.1rem; }
         .description { line-height: 1.8; color: var(--text-gray); white-space: pre-wrap; font-size: 1rem; }
@@ -33,7 +41,6 @@
         .buy-now { background: var(--blue); color: white; border: none; padding: 18px 30px; border-radius: 12px; cursor: pointer; font-weight: bold; flex: 1; font-size: 1rem; transition: 0.3s; }
         .buy-now:hover { background: #2c3e50; }
 
-        /* Social Share Styling */
         .share-section { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
         .share-title { font-size: 0.9rem; font-weight: bold; color: var(--blue); margin-bottom: 12px; display: block; }
         .share-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -41,8 +48,8 @@
         
         .wa-share { background: #25D366; }
         .fb-share { background: #1877F2; }
-        .tw-share { background: #000000; } /* X / Twitter Black */
-        .ig-share { background: #E4405F; } /* Instagram Pink */
+        .tw-share { background: #000000; }
+        .ig-share { background: #E4405F; }
         .copy-share { background: #607d8b; }
         
         .share-btn:hover { opacity: 0.8; transform: translateY(-3px); }
@@ -71,6 +78,11 @@
     <div class="detail-wrapper">
         <div class="product-image" id="img-box"></div>
         <div class="product-info">
+            
+            <div id="ref-alert">
+                <i class="fas fa-gift"></i> <b>Surprise!</b> You got a <b>₹5 Discount</b> because you joined through <span id="referrer-name"></span>'s link!
+            </div>
+
             <div class="category-tag" id="p-cat"></div>
             <h1 id="p-name" style="color:var(--blue); margin:10px 0; font-size: 2rem;"></h1>
             
@@ -92,7 +104,7 @@
             </div>
 
             <div class="share-section">
-                <span class="share-title"><i class="fas fa-share-alt"></i> Share this product:</span>
+                <span class="share-title"><i class="fas fa-share-alt"></i> Invite friends & Earn ₹10:</span>
                 <div class="share-buttons">
                     <a href="#" class="share-btn wa-share" id="share-wa" title="Share on WhatsApp"><i class="fab fa-whatsapp"></i></a>
                     <a href="#" class="share-btn fb-share" id="share-fb" title="Share on Facebook"><i class="fab fa-facebook-f"></i></a>
@@ -107,12 +119,16 @@
 
 <footer>
     <p>© 2026 The Nemi Mart - Purity in Every Purchase</p>
-    <p><i class="fas fa-envelope"></i> thenemimart@gmail.com</p>
 </footer>
 
 <script>
     const _supabase = supabase.createClient("https://rzmftpafcyxburlkwqnm.supabase.co", "sb_publishable_zt4Wt4wBgarEU15zF-RoKw_4achnceD");
     
+    // Referral Logic Variables
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+    const referrer = urlParams.get('ref'); // Get referrer name from URL
+
     function fixGDriveLink(link) {
         if (!link) return 'https://via.placeholder.com/500';
         if (link.includes('drive.google.com')) {
@@ -122,20 +138,21 @@
         return link;
     }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const productId = urlParams.get('id');
-
     async function loadDetails() {
-        if(!productId) {
-            window.location.href = 'index.html';
-            return;
-        }
+        if(!productId) { window.location.href = 'index.html'; return; }
 
         const { data, error } = await _supabase.from('products').select('*').eq('id', productId).single();
+        if(error || !data) { document.getElementById('loading').innerHTML = "<h1>Product not found!</h1>"; return; }
 
-        if(error || !data) {
-            document.getElementById('loading').innerHTML = "<h1>Product not found!</h1>";
-            return;
+        // --- Handle Referral Surprise ---
+        if (referrer) {
+            document.getElementById('ref-alert').style.display = 'block';
+            document.getElementById('referrer-name').innerText = referrer;
+            // Save referral info for checkout page
+            localStorage.setItem('nemi_referral_data', JSON.stringify({
+                by: referrer,
+                discount: 5
+            }));
         }
 
         // Fill Content
@@ -146,17 +163,14 @@
         document.getElementById('p-desc').innerText = data.description || "Premium quality product.";
         document.getElementById('img-box').innerHTML = `<img src="${fixGDriveLink(data.image_url)}" alt="${data.name}">`;
         
-        // --- Setup Sharing Links ---
-        const pageUrl = window.location.href;
-        const shareText = `Check out this amazing product from The Nemi Mart: *${data.name}* at just ₹${data.price}! \n\nBuy here: `;
+        // --- Setup Sharing Links with Referral ---
+        // Yahan 'Admin' ki jagah user ka naam aana chahiye login system ke baad
+        const myName = "Admin"; 
+        const pageUrl = window.location.origin + window.location.pathname + `?id=${productId}&ref=${myName}`;
+        const shareText = `Check out *${data.name}* at The Nemi Mart! Buy from my link to get ₹5 OFF: `;
 
-        // WhatsApp Share
         document.getElementById('share-wa').href = `https://wa.me/?text=${encodeURIComponent(shareText + pageUrl)}`;
-        
-        // Facebook Share
         document.getElementById('share-fb').href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
-        
-        // X (Twitter) Share - Using updated x-twitter icon and link
         document.getElementById('share-tw').href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(pageUrl)}`;
 
         // Add to Cart Logic
@@ -172,16 +186,16 @@
     }
 
     function copyLink() {
-        navigator.clipboard.writeText(window.location.href).then(() => {
-            alert("Product link copied to clipboard!");
+        const myName = "Admin";
+        const pageUrl = window.location.origin + window.location.pathname + `?id=${productId}&ref=${myName}`;
+        navigator.clipboard.writeText(pageUrl).then(() => {
+            alert("Referral link copied! Share this to earn rewards.");
         });
     }
 
     function shareInstagram() {
-        // Since Instagram doesn't have a direct URL share API like others
-        navigator.clipboard.writeText(window.location.href);
-        alert("Link copied! You can now paste it in your Instagram Story or DM.");
-        window.location.href = "instagram://"; // Tries to open Instagram app
+        copyLink();
+        window.location.href = "instagram://";
     }
 
     loadDetails();

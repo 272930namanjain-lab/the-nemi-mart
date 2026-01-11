@@ -6,10 +6,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --blue: #1a2332; --orange: #e68a00; }
+        :root { --blue: #1a2332; --orange: #e68a00; --green: #2e7d32; }
         body { font-family: sans-serif; margin: 0; background: #f4f7f6; display: flex; flex-direction: column; }
         
-        /* Security Overlay Style */
         #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--blue); z-index: 9999; display: flex; justify-content: center; align-items: center; color: white; flex-direction: column; }
         .auth-card { background: white; padding: 40px; border-radius: 15px; text-align: center; color: var(--blue); width: 90%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .pass-container { position: relative; margin: 20px 0; }
@@ -21,18 +20,24 @@
         .stat-box { background: #fff; border: 1px solid #ddd; padding: 15px 30px; border-radius: 10px; text-align: center; min-width: 150px; }
         .stat-box h2 { margin: 5px 0; color: var(--orange); }
         .stat-box p { margin: 0; font-size: 12px; font-weight: bold; color: #666; }
+
         .nav-tabs { display: flex; justify-content: center; gap: 10px; padding: 15px; background: #fff; }
         .tab-btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; background: #eee; }
         .active-tab { background: var(--orange); color: white; }
+        
         .container { padding: 20px; max-width: 1100px; margin: auto; width: 95%; }
         .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { padding: 12px; border: 1px solid #eee; text-align: left; font-size: 13px; }
         th { background: #f9f9f9; }
-        input, select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+        input, select, textarea { padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin: 5px 0; width: 100%; box-sizing: border-box; font-family: inherit; }
         .btn-delete { color: red; background: none; border: none; cursor: pointer; font-weight: bold; }
-        .badge-free { background: #e8f5e9; color: #2e7d32; padding: 2px 5px; border-radius: 4px; font-size: 10px; }
+        .badge-free { background: #e8f5e9; color: var(--green); padding: 2px 5px; border-radius: 4px; font-size: 10px; font-weight: bold; }
         .prod-img-preview { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; background: #eee; }
+        
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     </style>
 </head>
 <body>
@@ -56,14 +61,8 @@
 </header>
 
 <div class="stats-container">
-    <div class="stat-box">
-        <p>TOTAL SALES</p>
-        <h2 id="total-revenue">₹0</h2>
-    </div>
-    <div class="stat-box">
-        <p>TOTAL ORDERS</p>
-        <h2 id="total-orders">0</h2>
-    </div>
+    <div class="stat-box"><p>TOTAL SALES</p><h2 id="total-revenue">₹0</h2></div>
+    <div class="stat-box"><p>TOTAL ORDERS</p><h2 id="total-orders">0</h2></div>
 </div>
 
 <div class="nav-tabs">
@@ -93,33 +92,41 @@
     <div id="products-sec" style="display:none;">
         <div class="card">
             <h3>Add New Product</h3>
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+            <div class="grid-3">
                 <input type="text" id="p_name" placeholder="Product Name">
                 <input type="number" id="p_original" placeholder="MRP (Original Price)">
                 <input type="number" id="p_price" placeholder="Sale Price (Discounted)">
             </div>
-            <div style="display:grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-top:10px;">
+            <div class="grid-3" style="margin-top:10px;">
+                <input type="text" id="p_category" placeholder="Category (e.g. Essential Oils)">
+                <input type="number" id="p_rating" placeholder="Rating (1-5)" step="0.1" max="5">
+                <select id="p_stock">
+                    <option value="In Stock">Status: In Stock</option>
+                    <option value="Out of Stock">Status: Out of Stock</option>
+                </select>
+            </div>
+            <div class="grid-2" style="margin-top:10px;">
                 <input type="text" id="p_img" placeholder="Paste Google Drive Link or Image URL">
                 <select id="p_free_shipping">
                     <option value="true">Free Delivery: YES</option>
                     <option value="false">Free Delivery: NO</option>
                 </select>
             </div>
-            <p style="font-size: 11px; color: #888; margin-top: 5px;">* Tip: Google Drive links will be automatically fixed for display.</p>
+            <textarea id="p_desc" placeholder="Product Description (Benefits, How to use, etc.)" rows="4"></textarea>
+            
             <button class="tab-btn active-tab" style="margin-top:10px; width:100%" onclick="addNewProduct()">Add to Inventory</button>
         </div>
 
         <div class="card">
             <h3>Current Inventory</h3>
-            <table>
+            <table style="table-layout: fixed;">
                 <thead>
                     <tr>
-                        <th>Image</th>
-                        <th>Product</th>
-                        <th>MRP</th>
-                        <th>Sale Price</th>
-                        <th>Delivery</th>
-                        <th>Action</th>
+                        <th style="width: 60px;">Img</th>
+                        <th>Product Info</th>
+                        <th style="width: 80px;">Price</th>
+                        <th style="width: 100px;">Stock</th>
+                        <th style="width: 80px;">Action</th>
                     </tr>
                 </thead>
                 <tbody id="inventory-rows"></tbody>
@@ -131,37 +138,23 @@
 <script>
     const _supabase = supabase.createClient("https://rzmftpafcyxburlkwqnm.supabase.co", "sb_publishable_zt4Wt4wBgarEU15zF-RoKw_4achnceD");
 
-    // Security Check
     function checkAuth() {
-        const pass = document.getElementById('admin_pass').value;
-        if (pass === "Ahimsa Paramo Dharam") {
+        if (document.getElementById('admin_pass').value === "Ahimsa Paramo Dharam") {
             document.getElementById('auth-overlay').style.display = 'none';
             loadData();
-        } else {
-            alert("Unauthorized Access!");
-        }
+        } else { alert("Unauthorized Access!"); }
     }
 
     function toggleVisibility() {
         const pInput = document.getElementById('admin_pass');
         const icon = document.getElementById('togglePass');
-        if (pInput.type === "password") {
-            pInput.type = "text";
-            icon.classList.replace('fa-eye', 'fa-eye-slash');
-        } else {
-            pInput.type = "password";
-            icon.classList.replace('fa-eye-slash', 'fa-eye');
-        }
+        pInput.type = pInput.type === "password" ? "text" : "password";
+        icon.classList.toggle('fa-eye-slash');
     }
 
     function fixGDriveLink(link) {
         if (link.includes('drive.google.com')) {
-            let id = "";
-            if (link.includes('id=')) {
-                id = link.split('id=')[1].split('&')[0];
-            } else {
-                id = link.split('/d/')[1].split('/')[0];
-            }
+            let id = link.includes('id=') ? link.split('id=')[1].split('&')[0] : link.split('/d/')[1].split('/')[0];
             return `https://lh3.googleusercontent.com/u/0/d/${id}`;
         }
         return link;
@@ -183,21 +176,20 @@
             document.getElementById('total-revenue').innerText = '₹' + revenue;
             document.getElementById('total-orders').innerText = orders.length;
 
-            const tbody = document.getElementById('order-rows');
-            tbody.innerHTML = orders.map(o => `
+            document.getElementById('order-rows').innerHTML = orders.map(o => `
                 <tr>
                     <td><b>${o.user_name || 'N/A'}</b><br><small>${o.user_email}</small></td>
                     <td style="color:blue; font-weight:bold;">${o.utr_number}</td>
                     <td>
-                        <select onchange="updateOrder('${o.id}', 'status', this.value)">
+                        <select onchange="updateRow('orders', '${o.id}', {status: this.value})">
                             <option ${o.status=='Pending'?'selected':''}>Pending</option>
                             <option ${o.status=='Verified'?'selected':''}>Verified</option>
                             <option ${o.status=='Shipped'?'selected':''}>Shipped</option>
                         </select>
                     </td>
                     <td>
-                        <input type="text" placeholder="Courier" value="${o.courier_name || ''}" onblur="updateOrder('${o.id}', 'courier_name', this.value)">
-                        <input type="text" placeholder="Tracking URL" value="${o.tracking_url || ''}" onblur="updateOrder('${o.id}', 'tracking_url', this.value)">
+                        <input type="text" placeholder="Courier" value="${o.courier_name || ''}" onblur="updateRow('orders', '${o.id}', {courier_name: this.value})">
+                        <input type="text" placeholder="Tracking URL" value="${o.tracking_url || ''}" onblur="updateRow('orders', '${o.id}', {tracking_url: this.value})">
                     </td>
                     <td><button class="btn-delete" onclick="deleteRow('orders', '${o.id}')">Remove</button></td>
                 </tr>
@@ -205,23 +197,28 @@
         }
 
         if (products) {
-            const pbody = document.getElementById('inventory-rows');
-            pbody.innerHTML = products.map(p => `
+            document.getElementById('inventory-rows').innerHTML = products.map(p => `
                 <tr>
                     <td><img src="${fixGDriveLink(p.image_url)}" class="prod-img-preview" onerror="this.src='https://via.placeholder.com/50'"></td>
-                    <td>${p.name}</td>
-                    <td><del>₹${p.original_price || 0}</del></td>
-                    <td style="color:green; font-weight:bold;">₹${p.price}</td>
-                    <td>${p.is_free_shipping ? '<span class="badge-free">FREE</span>' : 'Standard'}</td>
+                    <td>
+                        <div style="font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p.name}</div>
+                        <small style="color:#888;">${p.category || 'No Category'}</small>
+                    </td>
+                    <td><del style="font-size:10px;">₹${p.original_price}</del><br><span style="color:green;font-weight:bold;">₹${p.price}</span></td>
+                    <td>
+                        <select style="font-size:11px;" onchange="updateRow('products', '${p.id}', {stock_status: this.value})">
+                            <option ${p.stock_status=='In Stock'?'selected':''}>In Stock</option>
+                            <option ${p.stock_status=='Out of Stock'?'selected':''}>Out of Stock</option>
+                        </select>
+                    </td>
                     <td><button class="btn-delete" onclick="deleteRow('products', '${p.id}')">Delete</button></td>
                 </tr>
             `).join('');
         }
     }
 
-    async function updateOrder(id, field, value) {
-        const updateData = {}; updateData[field] = value;
-        await _supabase.from('orders').update(updateData).eq('id', id);
+    async function updateRow(table, id, updateData) {
+        await _supabase.from(table).update(updateData).eq('id', id);
     }
 
     async function deleteRow(table, id) {
@@ -232,27 +229,26 @@
     }
 
     async function addNewProduct() {
-        const name = document.getElementById('p_name').value;
-        const original_price = document.getElementById('p_original').value;
-        const price = document.getElementById('p_price').value;
-        const raw_image_url = document.getElementById('p_img').value;
-        const is_free_shipping = document.getElementById('p_free_shipping').value === "true";
+        const fields = {
+            name: document.getElementById('p_name').value,
+            original_price: document.getElementById('p_original').value,
+            price: document.getElementById('p_price').value,
+            image_url: fixGDriveLink(document.getElementById('p_img').value),
+            is_free_shipping: document.getElementById('p_free_shipping').value === "true",
+            description: document.getElementById('p_desc').value,
+            category: document.getElementById('p_category').value,
+            rating: document.getElementById('p_rating').value || 4.5,
+            stock_status: document.getElementById('p_stock').value
+        };
 
-        if(!name || !price || !raw_image_url) return alert("Please fill Name, Price and Image URL");
-        const image_url = fixGDriveLink(raw_image_url);
-        const { error } = await _supabase.from('products').insert([{ 
-            name, price, original_price, image_url, is_free_shipping 
-        }]);
+        if(!fields.name || !fields.price || !fields.image_url) return alert("Please fill Name, Price and Image URL");
 
-        if(error) {
-            alert("Error: " + error.message);
-        } else {
-            alert("Product Added Successfully!");
+        const { error } = await _supabase.from('products').insert([fields]);
+        if(error) { alert("Error: " + error.message); } 
+        else {
+            alert("Product Added!");
             loadData();
-            document.getElementById('p_name').value = '';
-            document.getElementById('p_original').value = '';
-            document.getElementById('p_price').value = '';
-            document.getElementById('p_img').value = '';
+            ['p_name','p_original','p_price','p_img','p_desc','p_category','p_rating'].forEach(id => document.getElementById(id).value = '');
         }
     }
 </script>
